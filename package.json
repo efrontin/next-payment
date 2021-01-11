@@ -16,13 +16,10 @@
     "react-credit-cards": "^0.8.3",
     "react-dom": "17.0.1",
     "react-final-form": "^6.5.2",
-    "styled-components": "^5.2.1"
-  },
-  "devDependencies": {
+    "styled-components": "^5.2.1",
+    "mongoose": "^5.10.16",
     "formik": "^2.2.6",
     "payment": "^2.4.0",
-    "yup": "^0.32.8",
-    "react-dom": "17.0.1",
-    "mongoose": "^5.10.16"
+    "yup": "^0.32.8"
   }
 }
