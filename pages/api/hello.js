@@ -45,8 +45,8 @@ export default async (req, res) => {
       case "POST":
         payment.create({ ...req.body }, (error, payment) => {
           if (error) {
-            connection.close();
             res.status(500).json({ error });
+            connection.close();
           } else {
             res.status(200).json(payment);
             connection.close();
@@ -66,7 +66,7 @@ export default async (req, res) => {
         });
       break;
       default:
-        res.setHeader("Allow", ["POST"]);
+        res.setHeader("Allow", ["POST", "GET"]);
         res.status(405).end(`Method ${method} Not Allowed`);
     }
   } catch (e) {
