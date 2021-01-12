@@ -1,22 +1,22 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
+import axios from 'axios';
+
 const mongoose = require('mongoose');
 
-const stateEnum = new Map([
+const statusEnum = new Map([
   [0, "UNKNOW"],
   [1, "PENDING"],
   [2, "ACCEPTED"],
   [3, "VALIDATED"]
 ])
 
-const opts = { toJSON: { virtuals: true } };
-
 const paymentSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true
   },
-  state:{
+  status:{
     type: Number,
     enum: [0, 1, 2, 3],
     default: 1,
@@ -29,12 +29,7 @@ const paymentSchema = new mongoose.Schema({
     type: Date,
     default: null 
   }
-}, opts);
-
-paymentSchema.virtual('status').get( function(){
-  return stateEnum.get(this.state);
-})
-
+});
 
 export default async (req, res) => {
 
@@ -53,16 +48,19 @@ export default async (req, res) => {
       method,
     } = req;
 
-    console.log(payment.status);
     switch (method) {
-
       case "POST":
         payment.create({ ...req.body })
         .then( (payment) => {
+          console.log(payment);
           res.status(200).json(payment);
+          axios.post("https://localhost:5000/Payment", {
+            ...payment
+          })
           connection.close();
         })
-        .catch( err => {
+        .catch( (err) => {
+          console.log(err);
           res.status(500).json({ err });
           connection.close();
         })
@@ -74,7 +72,7 @@ export default async (req, res) => {
           res.status(200).json(payments);
           connection.close();
         })
-        .catch( err => {
+        .catch( (err, error) => {
           res.status(500).json({ err });
           connection.close();
         })

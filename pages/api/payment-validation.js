@@ -1,5 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
+import Payment from 'payment';
+
 const mongoose = require('mongoose');
 
 const stateEnum = new Map([
@@ -9,14 +11,12 @@ const stateEnum = new Map([
   [3, "VALIDATED"]
 ])
 
-const opts = { toJSON: { virtuals: true } };
-
 const paymentSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true
   },
-  state:{
+  status:{
     type: Number,
     enum: [0, 1, 2, 3],
     default: 1,
@@ -29,12 +29,7 @@ const paymentSchema = new mongoose.Schema({
     type: Date,
     default: null 
   }
-}, opts);
-
-paymentSchema.virtual('status').get( function(){
-  return stateEnum.get(this.state);
-})
-
+});
 
 export default async (req, res) => {
 
@@ -50,36 +45,30 @@ export default async (req, res) => {
   try {
     const payment = connection.model("PaymentSchema", paymentSchema);
     const {
+      body,
       method,
     } = req;
-
-    console.log(payment.status);
+    console.log(new Date(body.transactionDate * 1000));
     switch (method) {
 
       case "POST":
-        res.status(200).json("Good job, its done !!!!!")
-        // payment.create({ ...req.body })
-        // .then( (payment) => {
-        //   res.status(200).json(payment);
-        //   connection.close();
-        // })
-        // .catch( err => {
-        //   res.status(500).json({ error });
-        //   connection.close();
-        // })
-        break;
+        payment.findByIdAndUpdate(
+          body._id,
+          {
+            status: body.status,
+            transactionDate: new Date(body.transactionDate * 1000)
+          },
+        )
+        .then( payment => {
+          console.log(body);
+          console.log(payment);
 
-      // case "GET":
-      //   payment.find({}, "-__v",)
-      //   .then( payments => {
-      //     res.status(200).json(payments);
-      //     connection.close();
-      //   })
-      //   .catch( err => {
-      //     res.status(500).json({ err });
-      //     connection.close();
-      //   })
-      // break;
+          res.status(202).json("success")
+          connection.close();
+
+        } )
+        .catch( err => res.status(400).json(err, 'Une erreur est survenue'))
+        break;
 
       default:
         res.setHeader("Allow", ["POST"]);
