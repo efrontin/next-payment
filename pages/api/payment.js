@@ -50,20 +50,27 @@ export default async (req, res) => {
 
     switch (method) {
       case "POST":
-        payment.create({ ...req.body })
-        .then( (payment) => {
-          console.log(payment);
-          res.status(200).json(payment);
-          axios.post("https://localhost:5000/Payment", {
-            ...payment
-          })
-          connection.close();
+        const savedData = await payment.create({ ...req.body })
+        console.log(savedData);
+
+        const serviceBankResp = await axios.post("https://localhost:5000/Payment", {
+          ...savedData
         })
-        .catch( (err) => {
-          console.log(err);
-          res.status(500).json({ err });
-          connection.close();
-        })
+        console.log(serviceBankResp);
+        res.status(200).json(savedData);
+        
+        // .then( (payment) => {
+        //   console.log(payment);
+        //   axios.post("https://localhost:5000/Payment", {
+        //     ...payment
+        //   })
+        // })
+        // .catch( (err) => {
+        //   console.log(err);
+        //   res.status(500).json({ err });
+        // })
+        // res.status(200).json(payment);
+        // connection.close();
         break;
 
       case "GET":
