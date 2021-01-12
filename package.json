@@ -22,5 +22,10 @@
     "payment": "^2.4.0",
     "yup": "^0.32.8",
     "axios": "0.21.1"
+  },
+  "devDependencies": {
+    "@material-ui/data-grid": "^4.0.0-alpha.15",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/x-grid-data-generator": "^4.0.0-alpha.15"
   }
 }
