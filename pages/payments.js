@@ -63,6 +63,7 @@ export async function getServerSideProps() {
                 ...payment,
                 id : id + 1,
                 transactionDate : new Date(payment.transactionDate).toString(),
+                amount : payment.amount / 100,
                 status : statusEnum.get(payment.status)
             }
         })
