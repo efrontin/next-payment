@@ -101,13 +101,12 @@ export default function Payment() {
             }
 
             const requestOptions = {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: res
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
             };
 
             // POST de la data
-            await Axios.post('http://localhost:3000/api/payment', requestOptions)
+            await Axios.post('http://localhost:3000/api/payment', res, requestOptions)
                 .catch(err => {
                     console.log(err)
                     setError(err.message)

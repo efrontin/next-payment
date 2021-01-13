@@ -47,8 +47,10 @@ export default async (req, res) => {
 
     switch (method) {
       case "POST":
+        console.log(req.body);
         const savedData = await payment.create({ ...req.body })
         console.log("savedData", savedData);
+        console.log("json", JSON.stringify(savedData));
 
         try {
           const serviceBankResp = await axios.post('https://localhost:5001/Payment',

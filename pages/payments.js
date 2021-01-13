@@ -29,7 +29,7 @@ export default  function Payments({payments}) {
     }, [payments])
 
     return (
-        <div style={{ height: 400, width: '100%' }}>
+        <div style={{ height: 700, width: '100%' }}>
             <DataGrid className={classes.paymentsGrid}
                       id='id'
                       columns={[{ field: 'id', headerName: 'Opération', flex: 0.5, headerClassName: 'paymentsGridHeader',
