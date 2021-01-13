@@ -52,6 +52,8 @@ export default async (req, res) => {
       method,
     } = req;
 
+    //payment.remove({}, () => {})
+
     switch (method) {
       case "POST":
         const savedData = await payment.create({ ...req.body })
