@@ -38,7 +38,7 @@ export default async (req, res) => {
       body,
       method,
     } = req;
-    console.log(new Date(body.transactionDate * 1000));
+    
     switch (method) {
 
       case "POST":
