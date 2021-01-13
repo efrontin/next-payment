@@ -1,14 +1,12 @@
 import axios from 'axios';
 import * as https from "https";
-import dbConnect from "../../server/dataBase/mongoose"
-import {PaymentModel} from "../../server/service/paymentService"
+import payment from "../../server/service/paymentService"
 
 export default async (req, res) => {
 
   const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
   try {
-    const payment = PaymentModel
 
     const {
       method,
@@ -16,9 +14,11 @@ export default async (req, res) => {
 
     switch (method) {
       case "POST":
-        const savedData = await payment.save({ ...req.body })
+        const savedData = await payment.saveOne({ ...req.body })
 
         try {
+          
+
           const serviceBankResp = await axios.post('https://localhost:5001/Payment',
             JSON.stringify(savedData),
               { headers: {
@@ -26,21 +26,27 @@ export default async (req, res) => {
                   'Content-Type': 'application/json'
                 }, httpsAgent}
           )
+
           res.status(200).json(serviceBankResp);
+          payment.dbClose()
+
         } catch (e) {
-          res.status(500).json("une erreur est survenu", { e });
+          console.log(e);
+          res.status(500).json( {e} );
+          payment.dbClose()
         }
         break;
 
       case "GET":
-        payment.getAll({}, "-__v",)
+        payment.getAll({}, "-__v")
         .then( payments => {
+          console.log(payment);
           res.status(200).json(payments);
-          connection.close();
+          payment.dbClose()
         })
         .catch( (err) => {
           res.status(500).json({ err });
-          connection.close();
+          payment.dbClose()
         })
       break;
 
@@ -50,7 +56,7 @@ export default async (req, res) => {
     }
 
   } catch (e) {
-    connection.close();
+    payment.dbClose()
     res.status(500).json({ error: e.message || "something went wrong" });
   }
 };

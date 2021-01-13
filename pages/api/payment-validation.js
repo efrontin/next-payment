@@ -1,19 +1,16 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-
-import {PaymentModel} from "../../server/service/paymentService"
+import payment from "../../server/service/paymentService"
 
 export default async (req, res) => {
+  const {
+    body,
+    method,
+  } = req;
 
   try {
-    const payment = PaymentModel;
-    const {
-      body,
-      method,
-    } = req;
- 
     switch (method) {
 
       case "POST":
+
         payment.findOneAndUpdate(
           body._id,
           {
@@ -23,8 +20,7 @@ export default async (req, res) => {
         )
         .then( payment => {
           res.status(202).json("success")
-          connection.close();
-
+          payment.dbClose()
         } )
         .catch( err => res.status(400).json(err, 'Une erreur est survenue'))
         break;
@@ -35,7 +31,7 @@ export default async (req, res) => {
     }
 
   } catch (e) {
-    connection.close();
+    payment.dbClose()
     res.status(500).json({ error: e.message || "something went wrong" });
   }
 };

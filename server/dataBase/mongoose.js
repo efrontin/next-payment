@@ -1,7 +1,9 @@
 //Set up mongoose connection
 var mongoose = require('mongoose');
 
-export default dbConnect = () => {
+let dbConnection;
+
+export function dbConnect(){
     var mongoDB = 'mongodb://localhost/paymentDB';
     mongoose.connect(mongoDB,
         {
@@ -11,8 +13,13 @@ export default dbConnect = () => {
             useUnifiedTopology: true,
           }
     );
-    var db = mongoose.connection;
-    db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-    return db;
+    dbConnection = mongoose.connection;
+    dbConnection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+    return dbConnection;
 }
 
+export const dbClose = () => {
+    dbConnection.close()
+}
+
+// export default dbConnect;
