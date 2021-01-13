@@ -59,6 +59,7 @@ export default async (req, res) => {
                 }, httpsAgent}
               )
           //console.log("response", serviceBankResp);
+          const savedData = await payment.create({ ...serviceBankResp })
           res.status(200).json(savedData);
         } catch (e) {
           console.log("erreur", e)
