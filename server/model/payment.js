@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
+import {dbConnect} from "../dataBase/mongoose"
 //Define a schema
-
+dbConnect()
 var Schema = mongoose.Schema;
 
 let paymentSchema = new Schema({
