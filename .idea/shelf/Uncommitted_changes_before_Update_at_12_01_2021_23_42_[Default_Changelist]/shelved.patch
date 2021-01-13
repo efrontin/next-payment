@@ -1,0 +1,78 @@
+Index: pages/api/payment.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Next.js API route support: https://nextjs.org/docs/api-routes/introduction\r\n\r\nimport axios from 'axios';\r\n\r\nconst mongoose = require('mongoose');\r\n\r\nconst statusEnum = new Map([\r\n  [0, \"UNKNOW\"],\r\n  [1, \"PENDING\"],\r\n  [2, \"ACCEPTED\"],\r\n  [3, \"VALIDATED\"]\r\n])\r\n\r\nconst paymentSchema = new mongoose.Schema({\r\n  amount: {\r\n    type: Number,\r\n    required: true\r\n  },\r\n  status:{\r\n    type: Number,\r\n    enum: [0, 1, 2, 3],\r\n    default: 1,\r\n  },\r\n  label:{\r\n    type: String,\r\n    default: \"\"\r\n  },\r\n  transactionDate: {\r\n    type: Date,\r\n    default: null \r\n  }\r\n});\r\n\r\nexport default async (req, res) => {\r\n\r\n  const connection = await mongoose.createConnection(\r\n    \"mongodb://localhost/paymentDB\",\r\n    {\r\n      useNewUrlParser: true,\r\n      bufferCommands: false,\r\n      bufferMaxEntries: 0,\r\n      useUnifiedTopology: true,\r\n    }\r\n  );\r\n  try {\r\n    const payment = connection.model(\"PaymentSchema\", paymentSchema);\r\n    const {\r\n      method,\r\n    } = req;\r\n\r\n    switch (method) {\r\n      case \"POST\":\r\n        payment.create({ ...req.body })\r\n        .then( (payment) => {\r\n          console.log(payment);\r\n          res.status(200).json(payment);\r\n          axios.post(\"https://localhost:5000/Payment\", {\r\n            ...payment\r\n          })\r\n          connection.close();\r\n        })\r\n        .catch( (err) => {\r\n          console.log(err);\r\n          res.status(500).json({ err });\r\n          connection.close();\r\n        })\r\n        break;\r\n\r\n      case \"GET\":\r\n        payment.find({}, \"-__v\",)\r\n        .then( payments => {\r\n          res.status(200).json(payments);\r\n          connection.close();\r\n        })\r\n        .catch( (err, error) => {\r\n          res.status(500).json({ err });\r\n          connection.close();\r\n        })\r\n      break;\r\n\r\n      default:\r\n        res.setHeader(\"Allow\", [\"POST\", \"GET\"]);\r\n        res.status(405).end(`Method ${method} Not Allowed`);\r\n    }\r\n\r\n  } catch (e) {\r\n    connection.close();\r\n    res.status(500).json({ error: e.message || \"something went wrong\" });\r\n  }\r\n};
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pages/api/payment.js b/pages/api/payment.js
+--- a/pages/api/payment.js	(revision 3e710c4be76c75eaa0b8e276c2a7540c9d47927f)
++++ b/pages/api/payment.js	(date 1610466974331)
+@@ -53,8 +53,7 @@
+         payment.create({ ...req.body })
+         .then( (payment) => {
+           console.log(payment);
+-          res.status(200).json(payment);
+-          axios.post("https://localhost:5000/Payment", {
++          axios.post("https://localhost:5001/Payment", {
+             ...payment
+           })
+           connection.close();
+@@ -64,6 +63,7 @@
+           res.status(500).json({ err });
+           connection.close();
+         })
++        res.status(200).json(payment);
+         break;
+ 
+       case "GET":
+Index: pages/index.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import Head from 'next/head'\r\nimport styles from '../styles/Home.module.css'\r\nimport React, {useEffect, useState} from 'react'\r\nimport { Form, Field } from 'react-final-form'\r\nimport Card from '../components/shared/Card'\r\nimport {\r\n    formatCreditCardNumber,\r\n    formatCVC,\r\n    formatExpirationDate\r\n} from '../components/shared/cardUtils'\r\nimport Styles from \"../components/shared/Styles\";\r\nimport {Button, makeStyles} from \"@material-ui/core\";\r\nimport Axios from \"axios\";\r\n\r\nconst sleep = ms => new Promise(resolve => setTimeout(resolve, ms))\r\n\r\n// useEffect(() => {\r\n    // fetch('')\r\n    //     .then( res => {\r\n    //         if (!res.ok) {\r\n    //             throw Error('could not send the data')\r\n    //         }\r\n    //         return res.json();\r\n    //     })\r\n    //     .then( data => {\r\n    //         console.log(data)\r\n    //     })\r\n    //     .catch( err => {\r\n    //         console.log(err.message)\r\n    //     })\r\n// }, [])\r\n\r\n\r\nexport default function Home() {\r\n\r\n\r\n    const [isPending, setIsPending] = useState(false)\r\n    const [error, setError] = useState(null)\r\n\r\n    const onSubmit = async values => {\r\n\r\n\r\n        console.log(\"INFORMATIONS PAYMENT\", values.amount, values.libelle, values)\r\n        await sleep(300)\r\n        window.alert(JSON.stringify(values, 0, 2))\r\n        const requestOptions = {\r\n            method: 'PUT',\r\n            headers: { 'Content-Type': 'application/json' },\r\n            body: JSON.stringify(values)\r\n        };\r\n\r\n        await Axios.put('http://localhost:3000/api/hello', requestOptions)\r\n            .then(response => {\r\n                setIsPending(false)\r\n                this.state({amount: response.data.amount, libelle: response.data.libelle})\r\n            })\r\n            .catch( err => {\r\n                console.log(err)\r\n                setError(err.message)\r\n            })\r\n    }\r\n\r\n  return (\r\n    <div className={styles.container}>\r\n      <Head>\r\n        <title>Payment Next App</title>\r\n        <link rel=\"icon\" href=\"/favicon.ico\" />\r\n      </Head>\r\n\r\n      <main className={styles.main}>\r\n        <h1 className={styles.title}>\r\n          NextPal\r\n        </h1>\r\n          <Styles>\r\n              <Form\r\n                  onSubmit={onSubmit}\r\n                  render={({\r\n                               handleSubmit,\r\n                               form,\r\n                               submitting,\r\n                               pristine,\r\n                               values,\r\n                               active\r\n                           }) => {\r\n                      return (\r\n                          <form onSubmit={handleSubmit}>\r\n                              <Card\r\n                                  number={values.number || ''}\r\n                                  name={values.name || ''}\r\n                                  expiry={values.expiry || ''}\r\n                                  amount={values.amount || ''}\r\n                                  libelle={values.libelle || ''}\r\n                                  cvc={values.cvc || ''}\r\n                                  focused={active}\r\n                              />\r\n                              <div>\r\n                                  <Field\r\n                                      name=\"number\"\r\n                                      component=\"input\"\r\n                                      type=\"text\"\r\n                                      pattern=\"[\\d| ]{16,22}\"\r\n                                      placeholder=\"Card Number\"\r\n                                      format={formatCreditCardNumber}\r\n                                  />\r\n                              </div>\r\n                              <div>\r\n                                  <Field\r\n                                      name=\"name\"\r\n                                      component=\"input\"\r\n                                      type=\"text\"\r\n                                      placeholder=\"Name\"\r\n                                  />\r\n                              </div>\r\n                              <div>\r\n                                  <Field\r\n                                      name=\"expiry\"\r\n                                      component=\"input\"\r\n                                      type=\"text\"\r\n                                      pattern=\"\\d\\d/\\d\\d\"\r\n                                      placeholder=\"Valid Thru\"\r\n                                      format={formatExpirationDate}\r\n                                  />\r\n                                  <Field\r\n                                      name=\"cvc\"\r\n                                      component=\"input\"\r\n                                      type=\"text\"\r\n                                      pattern=\"\\d{3,4}\"\r\n                                      placeholder=\"CVC\"\r\n                                      format={formatCVC}\r\n                                  />\r\n                              </div>\r\n                              <div>\r\n                                  <Field\r\n                                      name=\"libelle\"\r\n                                      component=\"input\"\r\n                                      type=\"text\"\r\n                                      placeholder=\"Libelle\"\r\n                                  />\r\n                                  <Field\r\n                                      name=\"amount\"\r\n                                      component=\"input\"\r\n                                      type=\"number\"\r\n                                      placeholder=\"Amount\"\r\n                                  />\r\n                              </div>\r\n                              <div>{ error && <div>{ error }</div>}</div>\r\n                              <div>{ isPending && <div>Sending...</div>}</div>\r\n                              <div className=\"buttons\">\r\n                                  <Button color=\"primary\" type=\"submit\" disabled={submitting}>\r\n                                      Envoyer\r\n                                  </Button>\r\n                                  <button\r\n                                      type=\"button\"\r\n                                      onClick={form.reset}\r\n                                      disabled={submitting || pristine}\r\n                                  >\r\n                                      Reset\r\n                                  </button>\r\n                              </div>\r\n                              <h2>Values</h2>\r\n                              <pre>{JSON.stringify(values, 0, 2)}</pre>\r\n                          </form>\r\n                      )\r\n                  }}\r\n              />\r\n          </Styles>\r\n        {/*<PaymentView/>*/}\r\n      </main>\r\n    </div>\r\n  )\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pages/index.js b/pages/index.js
+--- a/pages/index.js	(revision 3e710c4be76c75eaa0b8e276c2a7540c9d47927f)
++++ b/pages/index.js	(date 1610465756279)
+@@ -37,6 +37,20 @@
+     const [isPending, setIsPending] = useState(false)
+     const [error, setError] = useState(null)
+ 
++    const required = value => (value ? undefined : 'Required')
++    const mustBeNumber = value => {
++        console.log(value)
++        console.log(value.replaceAll(" ", ""))
++        return (
++        isNaN(value.replaceAll(" ", "")) ? 'Must be a number' : undefined)}
++    const minValue = min => value =>
++        isNaN(value) || value >= min ? undefined : `Should be greater than ${min}`
++    const maxValue = max => value =>
++        isNaN(value) || value >= max ? undefined : `Should be lower than ${max}`
++    const composeValidators = (...validators) => value =>
++        validators.reduce((error, validator) => error || validator(value), undefined)
++
++
+     const onSubmit = async values => {
+ 
+ 
+@@ -100,8 +114,17 @@
+                                       type="text"
+                                       pattern="[\d| ]{16,22}"
+                                       placeholder="Card Number"
++                                      validate={composeValidators(required, mustBeNumber, minValue(16), maxValue(16))}
+                                       format={formatCreditCardNumber}
+-                                  />
++                                  >
++                                      {({ input, meta }) => (
++                                      <div>
++                                          <label>First Name</label>
++                                          <input {...input} type="text" placeholder="First Name" />
++                                          {meta.error && meta.touched && <span>{meta.error}</span>}
++                                      </div>
++                                      )}
++                                  </Field>
+                               </div>
+                               <div>
+                                   <Field

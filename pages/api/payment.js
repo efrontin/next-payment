@@ -1,6 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
 import axios from 'axios';
+import * as fs from "fs";
+import * as https from "https";
 
 const mongoose = require('mongoose');
 
@@ -33,6 +35,8 @@ const paymentSchema = new mongoose.Schema({
 
 export default async (req, res) => {
 
+  const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
   const connection = await mongoose.createConnection(
     "mongodb://localhost/paymentDB",
     {
@@ -51,13 +55,21 @@ export default async (req, res) => {
     switch (method) {
       case "POST":
         const savedData = await payment.create({ ...req.body })
-        console.log(savedData);
+        console.log("savedData", savedData);
 
-        const serviceBankResp = await axios.post("https://localhost:5000/Payment", {
-          ...savedData
-        })
-        console.log(serviceBankResp);
-        res.status(200).json(savedData);
+        try {
+          const serviceBankResp = await axios.post('https://localhost:5001/Payment',
+            JSON.stringify(savedData),
+              { headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+                }, httpsAgent}
+              )
+          //console.log("response", serviceBankResp);
+          res.status(200).json(savedData);
+        } catch (e) {
+          console.log("erreur", e)
+        }
         
         // .then( (payment) => {
         //   console.log(payment);
