@@ -6,6 +6,7 @@ import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 import Link from "@material-ui/core/Link";
 
+// Application du style de Material UI
 const useStyles = makeStyles((theme) => ({
     root: {
         backgroundColor: theme.palette.background.dark,
@@ -15,12 +16,14 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+// Formulaire de Paiement
 export default function Payment() {
     const classes = useStyles();
 
     const [cardNumber, setCardNumber] = useState("")
     const [amount, setAmount] = useState("")
     const [label, setLabel] = useState("")
+    const [error, setError] = useState(null)
 
     const [amountErr, setAmountError] = useState({})
     const [cardNumberErr, setCardNumberError] = useState({})
@@ -33,24 +36,28 @@ export default function Payment() {
         const amountErr = {}
         let isValid = true;
 
+        // Numero de carte egale a 16 chiffres
         if (cardNumber.replaceAll(' ', '').length !== 16) {
             cardNumberErr.cardNumberValidation = "Le nombre de numero sur" +
                 " la carte doit être de 16 chiffres";
             isValid = false
         }
 
+        // Input du numero de carte -> only number
         if (isNaN(Number(cardNumber.replaceAll(' ', '')))) {
             cardNumberErr.cardNumberValidation = "Le numero de carte ne doit" +
                 " comporter que des chiffres";
             isValid = false
         }
 
+        // Montant inferieur a 10 000
         if (amount > 10000) {
             amountErr.amountTooLong = "Le montant doit être inferieur à" +
                 " 10000 €";
             isValid = false
         }
 
+        // Montant superieur a 0,5
         if (amount.replace(',', '.') < 0.5) {
             // let coma = amount.replace(',', '.');
             amountErr.amountTooShort = "Le montant doit être superieur à" +
@@ -63,6 +70,8 @@ export default function Payment() {
 
         return isValid
     }
+
+    // Gestion du formatage des espaces dans l'input du N de carte
     const handleCardNumberChanged = change => {
         const cardFormat = change.replaceAll(" ", "")
         if (cardFormat.length < 17 ) {
@@ -80,35 +89,29 @@ export default function Payment() {
     }
 
     // Gestion de l'envoi du formulaire
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
         const isValid = formValidation()
 
-        if (isValid)
-        {
-            // Conversion du prix
-            const convertPrice = amount => (Math.round(amount * 1 * 100) / 100).toFixed(2)
-            console.log("INFORMATIONS PAYMENT", amount, amount)
+        if (isValid) {
 
             const res = {
                 label: label,
                 amount: amount
             }
-            console.log("INFORMATIONS PAYMENT", res)
 
-            // await sleep(300)
             const requestOptions = {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: res
             };
 
-            // POST de lq data
-            // Axios.post('http://localhost:3000/api/payment', requestOptions)
-            //      .catch( err => {
-            //          console.log(err)
-            //          setError(err.message)
-            //      })
+            // POST de la data
+            await Axios.post('http://localhost:3000/api/payment', requestOptions)
+                .catch(err => {
+                    console.log(err)
+                    setError(err.message)
+                })
         }
     }
 
