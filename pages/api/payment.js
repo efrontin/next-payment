@@ -1,52 +1,79 @@
+// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+
 import axios from 'axios';
 import * as https from "https";
-import payment from "../../server/service/paymentService"
+
+const mongoose = require('mongoose');
+
+const paymentSchema = new mongoose.Schema({
+  amount: {
+    type: Number,
+    required: true
+  },
+  status:{
+    type: Number,
+    enum: [0, 1, 2, 3],
+    default: 1,
+  },
+  label:{
+    type: String,
+    default: ""
+  },
+  transactionDate: {
+    type: Date,
+    default: null 
+  }
+});
 
 export default async (req, res) => {
 
   const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-  try {
+  const connection = await mongoose.createConnection(
+    "mongodb://localhost/paymentDB",
+    {
+      useNewUrlParser: true,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+      useUnifiedTopology: true,
+    }
+  );
 
+  try {
+    const payment = connection.model("PaymentSchema", paymentSchema);
     const {
       method,
     } = req;
 
     switch (method) {
       case "POST":
-        const savedData = await payment.saveOne({ ...req.body })
+        const savedData = await payment.create({ ...req.body })
+        console.log("savedData", savedData);
 
         try {
-          
-
           const serviceBankResp = await axios.post('https://localhost:5001/Payment',
             JSON.stringify(savedData),
               { headers: {
                   'Accept': 'application/json',
                   'Content-Type': 'application/json'
                 }, httpsAgent}
-          )
-
-          res.status(200).json(serviceBankResp);
-          payment.dbClose()
-
+              )
+          //console.log("response", serviceBankResp);
+          res.status(200).json(savedData);
         } catch (e) {
-          console.log(e);
-          res.status(500).json( {e} );
-          payment.dbClose()
+          console.log("erreur", e)
         }
         break;
 
       case "GET":
-        payment.getAll({}, "-__v")
+        payment.find({}, "-__v",)
         .then( payments => {
-          console.log(payment);
           res.status(200).json(payments);
-          payment.dbClose()
+          connection.close();
         })
-        .catch( (err) => {
+        .catch( (err, error) => {
           res.status(500).json({ err });
-          payment.dbClose()
+          connection.close();
         })
       break;
 
@@ -56,7 +83,7 @@ export default async (req, res) => {
     }
 
   } catch (e) {
-    payment.dbClose()
+    connection.close();
     res.status(500).json({ error: e.message || "something went wrong" });
   }
 };
